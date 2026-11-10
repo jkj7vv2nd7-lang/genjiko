@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>源氏香 ― 御香合わせ</title>
+<meta name="description" content="五つの香りを聞き分けて、同じ香りを組にする平安の遊び「源氏香」を、色・文様・音の印象で楽しむアプリ。出た型は源氏物語の帖名で発表されます。">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<meta property="og:title" content="源氏香 ― 御香合わせ">
+<meta property="og:description" content="五つの香りを聞き分け、源氏香の図で答え合わせ。出た型は源氏物語の帖名で発表されます。">
+<meta property="og:image" content="og-image.png">
+<meta property="og:type" content="website">
+<style>
+:root{
+  --bg:#f6efe0; --card:#fffdf6; --ink:#33272a; --purple:#463266; --purple2:#5b4a8a;
+  --gold:#b8860b; --gold2:#d4a017; --red:#b03a2e; --line:#e2d5b8;
+  --g0:#7e57c2; --g1:#b03a2e; --g2:#2e7d4f; --g3:#c08f00; --g4:#2b5ea7;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Yu Gothic",sans-serif;line-height:1.65}
+.serif{font-family:"Hiragino Mincho ProN","Yu Mincho","MS Mincho",serif}
+header{background:linear-gradient(135deg,#3a2858,#5b4a8a);color:#f7ead0;padding:20px 14px 16px;text-align:center;position:relative;overflow:hidden}
+header h1{margin:0;font-size:32px;letter-spacing:.22em;font-weight:700}
+header p{margin:4px 0 0;font-size:13px;color:#e8d9ae;letter-spacing:.12em}
+.smoke{position:absolute;bottom:-6px;width:26px;height:64px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(255,255,255,.34),rgba(255,255,255,0) 70%);animation:rise 5.5s ease-in-out infinite;pointer-events:none}
+@keyframes rise{0%{transform:translateY(16px) scaleX(1);opacity:0}25%{opacity:.85}100%{transform:translateY(-52px) scaleX(1.7);opacity:0}}
+main{max-width:560px;margin:0 auto;padding:14px 12px 40px}
+.screen{display:none}.screen.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0;box-shadow:0 2px 8px rgba(70,50,20,.08)}
+.btn{display:block;width:100%;padding:14px;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;margin:9px 0;letter-spacing:.06em}
+.btn-main{background:var(--purple);color:#ffe9a8}
+.btn-sub{background:#efe6cf;color:var(--purple);border:1px solid var(--gold)}
+.btn-ghost{background:#fff;color:var(--purple);border:1px solid var(--line)}
+.btn:disabled{opacity:.42;cursor:default}
+.btn:active{transform:scale(.985)}
+.row{display:flex;gap:8px}.row .btn{flex:1}
+h2{font-size:20px;margin:2px 0 8px;color:var(--purple);letter-spacing:.08em}
+.small{font-size:13px;color:#6b5b4a}
+.center{text-align:center}
+.msg{min-height:1.7em;font-weight:700;color:var(--purple);text-align:center;margin:8px 0 2px}
+.levels{display:flex;gap:6px;justify-content:center;margin:6px 0 2px}
+.levels button{flex:1;padding:9px 4px;border-radius:10px;border:1.5px solid var(--purple2);background:#fff;color:var(--purple);font-weight:700;font-size:15px;cursor:pointer}
+.levels button.on{background:var(--purple);color:#ffe9a8}
+.cups{display:flex;justify-content:space-between;gap:6px;margin:14px 0 6px}
+.cup{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:none;cursor:pointer;padding:2px}
+.cupbody{width:58px;height:58px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#8a76c2,#463266 72%);position:relative;box-shadow:0 3px 7px rgba(50,30,80,.35);border:3px solid transparent;transition:transform .12s}
+.cupbody::before{content:"";position:absolute;left:50%;top:-9px;transform:translateX(-50%);width:20px;height:12px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d9ae,#b8860b);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.cupbody .smk{position:absolute;left:50%;top:-26px;transform:translateX(-50%);font-size:15px;color:#a793c9;opacity:0;transition:opacity .3s}
+.cup.heard .cupbody{border-color:var(--gold2)}
+.cup.selected .cupbody{border-color:#e23b2e;transform:scale(1.1)}
+.cup .cname{font-size:13px;font-weight:700;color:var(--purple)}
+.cup .badge{font-size:11px;font-weight:700;color:#fff;border-radius:999px;padding:1px 9px;min-height:17px}
+.cup .listen{font-size:12px;color:var(--purple2);text-decoration:underline}
+.figbox{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 6px 2px;text-align:center}
+.figbox svg{max-width:250px;width:100%;height:auto}
+.gem{width:150px;height:150px;margin:6px auto;border-radius:50%;box-shadow:inset 0 -12px 24px rgba(0,0,0,.25),0 4px 12px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center}
+.gem svg{width:104px;height:104px}
+.overlay{position:fixed;inset:0;background:rgba(40,26,54,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.overlay.open{display:flex}
+.sheet{background:var(--card);border-radius:16px;max-width:420px;width:100%;padding:20px 18px;text-align:center;max-height:88vh;overflow:auto}
+.grid52{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.gcell{background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px 2px 4px;text-align:center;cursor:pointer}
+.gcell svg{width:100%;height:auto;max-width:74px}
+.gcell .gn{font-size:12.5px;font-weight:700;color:var(--purple)}
+.kekka-name{font-size:30px;color:var(--purple);letter-spacing:.14em;margin:2px 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px 0}
+.chip{font-size:12.5px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:3px 10px}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:-1px;margin-right:4px}
+table.why{width:100%;border-collapse:collapse;font-size:14px}
+table.why td,table.why th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left}
+footer{text-align:center;color:#8a7757;font-size:12px;padding:10px 14px 26px}
+a{color:var(--purple2)}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+.confetti i{position:absolute;top:-14px;width:9px;height:14px;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(106vh) rotate(560deg)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="smoke" style="left:16%"></div><div class="smoke" style="left:47%;animation-delay:1.6s"></div><div class="smoke" style="left:79%;animation-delay:3s"></div>
+  <h1 class="serif">源 氏 香</h1>
+  <p>― 御香合わせ ―</p>
+</header>
+<main>
+  <!-- タイトル -->
+  <section id="scr-title" class="screen active">
+    <div class="card">
+      <p style="margin:4px 0">五つの香りを 一つずつ聞いて、<b>同じ香りは どれとどれか</b>を当てる、平安の宮廷の遊びです。</p>
+      <p style="margin:4px 0">香りは <b>色・文様・音</b> の印象であらわします。答えは「源氏香の図」で表され、出た型には『源氏物語』の帖名が付きます。全52種、あなたは どの帖に出会うでしょう。</p>
+      <div class="figbox" id="title-fig"></div>
+      <p class="small center" style="margin:6px 0 0">上の図は「藤袴（ふじばかま）」の型。第2香と第5香が同じ香りです。<br>※源氏香の図は <b>右から第1香</b> と読みます。</p>
+    </div>
+    <div class="card">
+      <h2 class="serif">むずかしさ</h2>
+      <div class="levels" id="levels">
+        <button data-lv="easy" class="on">やさしい</button>
+        <button data-lv="normal">ふつう</button>
+        <button data-lv="hard">むずかしい</button>
+      </div>
+      <p class="small" id="lv-desc" style="margin:6px 0 0"></p>
+    </div>
+    <button class="btn btn-main" id="btn-play">あそぶ</button>
+    <button class="btn btn-sub" id="btn-gallery">ずかん ― 52の型と帖名</button>
+    <button class="btn btn-sub" id="btn-why">なぜ52とおり？ ― 数え方</button>
+    <button class="btn btn-ghost" id="btn-how">あそびかた</button>
+    <p class="small center" id="stats-line"></p>
+  </section>
+
+  <!-- 聞香 -->
+  <section id="scr-smell" class="screen">
+    <div class="card">
+      <h2 class="serif">一、香りを聞く</h2>
+      <p style="margin:4px 0">香杯をタップすると香りが開きます。<b>色・文様・音</b>をよく覚えてください。五つとも聞いたら、答えに進めます。</p>
+      <div class="cups" id="smell-cups"></div>
+      <p class="msg" id="smell-msg"></p>
+      <button class="btn btn-main" id="btn-to-answer" disabled>二、答えに すすむ</button>
+      <button class="btn btn-ghost" id="btn-smell-back">タイトルへ もどる</button>
+    </div>
+  </section>
+
+  <!-- 回答 -->
+  <section id="scr-answer" class="screen">
+    <div class="card">
+      <h2 class="serif">二、同じ香りを組にする</h2>
+      <p style="margin:4px 0">香杯をタップして選び、<b>同じ香りだと思う香杯</b>をタップすると同じ組に入ります。選んだ香杯を もう一度タップすると、組から外れます。</p>
+      <div class="figbox"><div id="answer-fig"></div><p class="small" style="margin:2px 0 4px">あなたの型（右から第1香）</p></div>
+      <div class="cups" id="answer-cups"></div>
+      <p class="msg" id="answer-msg"></p>
+      <p class="small center" id="relisten-info"></p>
+      <div class="row">
+        <button class="btn btn-ghost" id="btn-reset-groups">リセット</button>
+        <button class="btn btn-main" id="btn-judge">これで答える</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 結果 -->
+  <section id="scr-result" class="screen">
+    <div class="card center">
+      <p class="small" style="margin:0">出た型は</p>
+      <p class="kekka-name serif" id="res-name"></p>
+      <p class="small" id="res-reading" style="margin:0"></p>
+      <p id="res-score" style="font-weight:700;font-size:18px;margin:10px 0 2px"></p>
+      <p id="res-detail" style="margin:2px 0"></p>
+      <div class="chips" id="res-chips"></div>
+    </div>
+    <div class="card">
+      <div class="row" style="align-items:flex-start">
+        <div style="flex:1"><div class="figbox"><div id="res-fig-true"></div><p class="small" style="margin:2px 0 4px">正解の型</p></div></div>
+        <div style="flex:1"><div class="figbox"><div id="res-fig-mine"></div><p class="small" style="margin:2px 0 4px">あなたの型</p></div></div>
+      </div>
+      <p id="res-mine-name" class="center" style="margin:8px 0 0"></p>
+    </div>
+    <button class="btn btn-main" id="btn-again">もう一局</button>
+    <button class="btn btn-ghost" id="btn-result-title">タイトルへ もどる</button>
+  </section>
+
+  <!-- 図鑑 -->
+  <section id="scr-gallery" class="screen">
+    <div class="card">
+      <h2 class="serif">ずかん ― 52の型</h2>
+      <p style="margin:4px 0">型をタップすると大きく見られます。52種すべてに『源氏物語』の帖名が付いています（全54帖から「桐壺」と「夢浮橋」を除いた52帖）。</p>
+      <div class="grid52" id="grid52"></div>
+    </div>
+    <button class="btn btn-ghost" id="btn-gallery-back">タイトルへ もどる</button>
+  </section>
+
+  <!-- なぜ52 -->
+  <section id="scr-why" class="screen">
+    <div class="card">
+      <h2 class="serif">なぜ52とおり？</h2>
+      <p>五つの香りの「分かれ方」を、形ごとに数えます。</p>
+      <table class="why">
+        <tr><th>分かれ方</th><th>数</th></tr>
+        <tr><td>全部 同じ</td><td>1</td></tr>
+        <tr><td>4つ同じ ＋ 1つ</td><td>5</td></tr>
+        <tr><td>3つ ＋ 2つ</td><td>10</td></tr>
+        <tr><td>3つ同じ ＋ 1つ ＋ 1つ</td><td>10</td></tr>
+        <tr><td>2つ ＋ 2つ ＋ 1つ</td><td>15</td></tr>
+        <tr><td>2つ同じ ＋ 1つ ＋ 1つ ＋ 1つ</td><td>10</td></tr>
+        <tr><td>全部 ちがう</td><td>1</td></tr>
+        <tr><th>合計</th><th>52</th></tr>
+      </table>
+      <p>ものの分かれ方の数は「ベル数」と呼ばれます。1個なら1、2個なら2、3個なら5、4個なら15、5個なら <b>52</b>、6個では もう203にもなります。</p>
+      <p>この数え方のお話は、絵本『数学の絵本』第34話「五つの香りと五十二の型 ― 源氏香のおはなし」でも読めます。</p>
+      <p><a href="https://jkj7vv2nd7-lang.github.io/math-picture-books/" target="_blank" rel="noopener">Web版『数学の絵本』はこちら</a></p>
+    </div>
+    <button class="btn btn-ghost" id="btn-why-back">タイトルへ もどる</button>
+  </section>
+</main>
+<footer>
+  型と帖名の対応は、伝統的な『源氏香の図』に基づき、公開資料（みんなの知識 ちょっと便利帳『源氏香の図』、Wikipedia「香の図」）と照合して作成しました。<br>
+  不具合が出るかもしれません。実際にご使用の際に不具合がありましたらコメント欄からお知らせください。
+</footer>
+
+<!-- 香りを開くオーバーレイ -->
+<div class="overlay" id="ov-scent">
+  <div class="sheet">
+    <p class="serif" id="ov-title" style="font-size:19px;color:var(--purple);margin:0 0 2px"></p>
+    <div class="gem" id="ov-gem"></div>
+    <p id="ov-name" style="font-weight:700;font-size:19px;margin:8px 0 2px"></p>
+    <p class="small" id="ov-note" style="margin:0 0 6px"></p>
+    <button class="btn btn-sub" id="ov-replay">もう一度 音を聞く</button>
+    <button class="btn btn-main" id="ov-close">とじる</button>
+  </div>
+</div>
+
+<!-- 図鑑の拡大 -->
+<div class="overlay" id="ov-fig">
+  <div class="sheet">
+    <div class="figbox"><div id="ov-fig-big"></div></div>
+    <p class="kekka-name serif" id="ov-fig-name" style="font-size:26px"></p>
+    <p class="small" id="ov-fig-reading" style="margin:0"></p>
+    <p id="ov-fig-desc" style="margin:10px 0"></p>
+    <button class="btn btn-main" id="ov-fig-close">とじる</button>
+  </div>
+</div>
+
+<!-- あそびかた -->
+<div class="overlay" id="ov-how">
+  <div class="sheet" style="text-align:left">
+    <h2 class="serif" style="text-align:center">あそびかた</h2>
+    <p>1. 五つの香杯を順に開いて、香りの印象（色・文様・音）を覚えます。</p>
+    <p>2. 同じ香りだと思う香杯どうしを、同じ組にします。図は自動で描かれます。</p>
+    <p>3. 「これで答える」で答え合わせ。正解の型の帖名が発表されます。あなたの型にも必ず帖名があります。</p>
+    <p>・源氏香の図は <b>右から第1香</b>。同じ香りは、線の上を横線で結んで表します。<br>
+    ・「やさしい」では、答える場面でも何度でも香りを聞き直せます。「ふつう」は3回まで、「むずかしい」では聞き直しはできず、似た印象の香りも出ます。</p>
+    <button class="btn btn-main" id="ov-how-close">とじる</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ===== データ：52の型（帖名・読み・第1香〜第5香の組番号） ===== */
+const TABLE = [{"name": "帚木", "reading": "ははきぎ", "rgs": [0, 1, 2, 3, 4]}, {"name": "空蝉", "reading": "うつせみ", "rgs": [0, 0, 1, 2, 3]}, {"name": "夕顔", "reading": "ゆうがお", "rgs": [0, 1, 1, 2, 3]}, {"name": "若紫", "reading": "わかむらさき", "rgs": [0, 0, 1, 1, 2]}, {"name": "末摘花", "reading": "すえつむはな", "rgs": [0, 1, 1, 1, 1]}, {"name": "紅葉賀", "reading": "もみじのが", "rgs": [0, 1, 0, 0, 2]}, {"name": "花宴", "reading": "はなのえん", "rgs": [0, 1, 0, 2, 3]}, {"name": "葵", "reading": "あおい", "rgs": [0, 1, 2, 3, 3]}, {"name": "賢木", "reading": "さかき", "rgs": [0, 0, 1, 1, 1]}, {"name": "花散里", "reading": "はなちるさと", "rgs": [0, 1, 0, 1, 2]}, {"name": "須磨", "reading": "すま", "rgs": [0, 1, 1, 0, 1]}, {"name": "明石", "reading": "あかし", "rgs": [0, 1, 2, 2, 3]}, {"name": "澪標", "reading": "みおつくし", "rgs": [0, 0, 1, 0, 2]}, {"name": "蓬生", "reading": "よもぎう", "rgs": [0, 1, 2, 2, 2]}, {"name": "関屋", "reading": "せきや", "rgs": [0, 1, 1, 1, 2]}, {"name": "絵合", "reading": "えあわせ", "rgs": [0, 1, 2, 0, 2]}, {"name": "松風", "reading": "まつかぜ", "rgs": [0, 1, 1, 2, 2]}, {"name": "薄雲", "reading": "うすぐも", "rgs": [0, 0, 0, 0, 1]}, {"name": "朝顔", "reading": "あさがお", "rgs": [0, 1, 1, 2, 1]}, {"name": "少女", "reading": "おとめ", "rgs": [0, 1, 2, 3, 2]}, {"name": "玉鬘", "reading": "たまかずら", "rgs": [0, 0, 0, 1, 1]}, {"name": "初音", "reading": "はつね", "rgs": [0, 1, 2, 1, 2]}, {"name": "胡蝶", "reading": "こちょう", "rgs": [0, 1, 0, 0, 1]}, {"name": "蛍", "reading": "ほたる", "rgs": [0, 1, 2, 1, 1]}, {"name": "常夏", "reading": "とこなつ", "rgs": [0, 0, 0, 1, 2]}, {"name": "篝火", "reading": "かがりび", "rgs": [0, 1, 2, 1, 3]}, {"name": "野分", "reading": "のわき", "rgs": [0, 0, 1, 2, 2]}, {"name": "行幸", "reading": "みゆき", "rgs": [0, 0, 1, 0, 1]}, {"name": "藤袴", "reading": "ふじばかま", "rgs": [0, 1, 2, 3, 1]}, {"name": "真木柱", "reading": "まきばしら", "rgs": [0, 1, 2, 1, 0]}, {"name": "梅枝", "reading": "うめがえ", "rgs": [0, 1, 0, 0, 0]}, {"name": "藤裏葉", "reading": "ふじのうらば", "rgs": [0, 1, 1, 0, 2]}, {"name": "若菜上", "reading": "わかな じょう", "rgs": [0, 1, 1, 0, 0]}, {"name": "若菜下", "reading": "わかな げ", "rgs": [0, 0, 1, 2, 1]}, {"name": "柏木", "reading": "かしわぎ", "rgs": [0, 1, 0, 2, 0]}, {"name": "横笛", "reading": "よこぶえ", "rgs": [0, 0, 1, 2, 0]}, {"name": "鈴虫", "reading": "すずむし", "rgs": [0, 1, 1, 2, 0]}, {"name": "夕霧", "reading": "ゆうぎり", "rgs": [0, 1, 0, 2, 1]}, {"name": "御法", "reading": "みのり", "rgs": [0, 1, 2, 0, 1]}, {"name": "幻", "reading": "まぼろし", "rgs": [0, 1, 2, 3, 0]}, {"name": "匂宮", "reading": "におうのみや", "rgs": [0, 1, 0, 1, 1]}, {"name": "紅梅", "reading": "こうばい", "rgs": [0, 1, 2, 0, 3]}, {"name": "竹河", "reading": "たけかわ", "rgs": [0, 1, 1, 1, 0]}, {"name": "橋姫", "reading": "はしひめ", "rgs": [0, 0, 0, 1, 0]}, {"name": "椎本", "reading": "しいがもと", "rgs": [0, 1, 2, 2, 1]}, {"name": "総角", "reading": "あげまき", "rgs": [0, 0, 1, 1, 0]}, {"name": "早蕨", "reading": "さわらび", "rgs": [0, 1, 0, 2, 2]}, {"name": "宿木", "reading": "やどりぎ", "rgs": [0, 0, 1, 0, 0]}, {"name": "東屋", "reading": "あずまや", "rgs": [0, 1, 2, 0, 0]}, {"name": "浮舟", "reading": "うきふね", "rgs": [0, 1, 2, 2, 0]}, {"name": "蜻蛉", "reading": "かげろう", "rgs": [0, 1, 0, 1, 0]}, {"name": "手習", "reading": "てならい", "rgs": [0, 0, 0, 0, 0]}];
+/* ===== 香りの印象 ===== */
+const SCENTS = [
+  {name:"梅の香り", color:"#e2608c", dark:"#b83a68", motif:"ume",       notes:[659.25,783.99]},
+  {name:"松の香り", color:"#2e7d4f", dark:"#1d5c39", motif:"matsu",     notes:[261.63,329.63]},
+  {name:"竹の香り", color:"#8bc34a", dark:"#5f8f2e", motif:"take",      notes:[293.66,440.00]},
+  {name:"菊の香り", color:"#f2b705", dark:"#c08f00", motif:"kiku",      notes:[392.00,587.33]},
+  {name:"桜の香り", color:"#f6a8c1", dark:"#d67b9c", motif:"sakura",    notes:[698.46,880.00]},
+  {name:"藤の香り", color:"#7e57c2", dark:"#58389c", motif:"fuji",      notes:[329.63,493.88]},
+  {name:"橘の香り", color:"#ef7d1a", dark:"#c25e08", motif:"tachibana", notes:[440.00,659.25]},
+  {name:"楓の香り", color:"#d23c28", dark:"#a02618", motif:"kaede",     notes:[349.23,523.25]}
+];
+const EASY_POOL = [0,1,3,5,6];
+const SIMILAR = [[0,4],[1,2],[5,0]];
+const GROUP_COLORS = ["var(--g0)","var(--g1)","var(--g2)","var(--g3)","var(--g4)"];
+const GROUP_HEX = ["#7e57c2","#b03a2e","#2e7d4f","#c08f00","#2b5ea7"];
+const LV_DESC = {
+  easy:"印象が はっきり違う香りだけが出ます。答える場面でも、何度でも聞き直せます。",
+  normal:"香りは8種から出ます。聞き直しは3回まで。",
+  hard:"似た印象の香りが混ざります。聞き直しはできません。記憶が頼りです。"
+};
+let level = localStorage.getItem("genjiko-level") || "easy";
+if (!LV_DESC[level]) level = "easy";
+let stats = {rounds:0, perfect:0};
+
+/* ===== 音 ===== */
+let AC = null;
+function ac(){ if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === "suspended") AC.resume(); return AC; }
+function tone(f, t0, dur, vol, type){
+  const a = ac(), o = a.createOscillator(), o2 = a.createOscillator(), g = a.createGain();
+  o.type = type || "sine"; o.frequency.value = f; o2.type = "sine"; o2.frequency.value = f * 2;
+  const g2 = a.createGain(); g2.gain.value = 0.25;
+  g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + 0.015);
+  g.gain.exponentialRampToValueAtTime(0.0008, t0 + dur);
+  o.connect(g); o2.connect(g2); g2.connect(g); g.connect(a.destination);
+  o.start(t0); o2.start(t0); o.stop(t0 + dur + 0.05); o2.stop(t0 + dur + 0.05);
+}
+function playScent(s){ const a = ac(), t = a.currentTime; tone(s.notes[0], t, 1.1, 0.20); tone(s.notes[1], t + 0.16, 1.3, 0.18); }
+function sndTap(){ const a = ac(); tone(1180, a.currentTime, 0.12, 0.10, "triangle"); }
+function sndJoin(){ const a = ac(), t = a.currentTime; tone(523.25, t, 0.4, 0.14); tone(783.99, t + 0.09, 0.5, 0.14); }
+function sndGood(){ const a = ac(), t = a.currentTime; [523.25,659.25,783.99,1046.5].forEach((f,i)=>tone(f, t + i*0.11, 0.7, 0.16)); }
+function sndFanfare(){ const a = ac(), t = a.currentTime; [392,523.25,659.25,783.99,1046.5,1318.5].forEach((f,i)=>tone(f, t + i*0.13, 1.0, 0.17)); }
+
+/* ===== 文様（SVG） ===== */
+function motifSVG(m, color){
+  const c = color || "#fff";
+  let inner = "";
+  if (m === "ume"){ inner = `<circle cx="50" cy="34" r="11" fill="${c}"/><circle cx="66" cy="46" r="11" fill="${c}"/><circle cx="61" cy="63" r="11" fill="${c}"/><circle cx="39" cy="63" r="11" fill="${c}"/><circle cx="34" cy="46" r="11" fill="${c}"/><circle cx="50" cy="49" r="6" fill="${c}" opacity=".85"/>`; }
+  else if (m === "matsu"){ inner = Array.from({length:7},(_,i)=>`<line x1="${26+i*8}" y1="76" x2="${38+i*5}" y2="26" stroke="${c}" stroke-width="4" stroke-linecap="round"/>`).join(""); }
+  else if (m === "take"){ inner = [32,50,68].map(x=>`<rect x="${x-6}" y="20" width="12" height="60" rx="5" fill="${c}"/><rect x="${x-6}" y="42" width="12" height="5" fill="#000" opacity=".18"/>`).join(""); }
+  else if (m === "kiku"){ inner = Array.from({length:12},(_,i)=>`<ellipse cx="50" cy="32" rx="7" ry="17" fill="${c}" transform="rotate(${i*30} 50 50)"/>`).join("") + `<circle cx="50" cy="50" r="7" fill="${c}"/>`; }
+  else if (m === "sakura"){ inner = Array.from({length:5},(_,i)=>`<path d="M50 50 L44 26 Q50 20 56 26 Z" fill="${c}" transform="rotate(${i*72} 50 50)"/>`).join("") + `<circle cx="50" cy="50" r="5" fill="${c}"/>`; }
+  else if (m === "fuji"){ inner = [30,42,54,66].map((x,i)=>Array.from({length:4-(i%2)},(_,j)=>`<circle cx="${x}" cy="${26+j*13}" r="6.5" fill="${c}"/>`).join("")).join(""); }
+  else if (m === "tachibana"){ inner = [[38,38],[58,32],[68,50],[50,56],[34,58],[58,70],[44,74]].map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="8" fill="${c}"/>`).join(""); }
+  else if (m === "kaede"){ inner = `<path d="M50 16 L58 38 L80 34 L64 48 L74 68 L56 58 L50 80 L44 58 L26 68 L36 48 L20 34 L42 38 Z" fill="${c}"/>`; }
+  return `<svg viewBox="0 0 100 100">${inner}</svg>`;
+}
+
+/* ===== 源氏香の図（SVG）: rgs は第1香〜第5香の組番号。図は右から第1香 ===== */
+function figureSVG(rgs, opt){
+  opt = opt || {};
+  const W = 210, baseY = 128, topY = 56, step = 14;
+  const X = c => 32 + (5 - c) * 37; // 第1香が右端
+  const groups = {};
+  rgs.forEach((g, i) => { (groups[g] = groups[g] || []).push(i + 1); });
+  const multi = Object.values(groups).filter(m => m.length > 1);
+  // 交差する組に段をつける（区間カラーリング）
+  const spans = multi.map(m => ({m, lo: Math.min(...m.map(X)), hi: Math.max(...m.map(X))}))
+                     .sort((a, b) => a.lo - b.lo || b.hi - a.hi);
+  const levels = [];
+  spans.forEach(sp => {
+    let lv = 0;
+    while (levels[lv] && levels[lv].some(o => !(sp.hi < o.lo || sp.lo > o.hi))) lv++;
+    (levels[lv] = levels[lv] || []).push(sp); sp.lv = lv;
+  });
+  const barY = {}; spans.forEach(sp => sp.m.forEach(c => barY[c] = topY - sp.lv * step));
+  const col = opt.color || "#463266";
+  let s = `<svg viewBox="0 0 ${W} 150" xmlns="http://www.w3.org/2000/svg">`;
+  spans.forEach(sp => { const y = topY - sp.lv * step; s += `<line x1="${sp.lo}" y1="${y}" x2="${sp.hi}" y2="${y}" stroke="${col}" stroke-width="5.5" stroke-linecap="round"/>`; });
+  for (let c = 1; c <= 5; c++){
+    const x = X(c), ty = (barY[c] !== undefined) ? barY[c] : topY;
+    s += `<line x1="${x}" y1="${baseY}" x2="${x}" y2="${ty}" stroke="${col}" stroke-width="5.5" stroke-linecap="round"/>`;
+    if (barY[c] === undefined) s += `<line x1="${x-8}" y1="${topY}" x2="${x+8}" y2="${topY}" stroke="${col}" stroke-width="5.5" stroke-linecap="round"/>`;
+  }
+  if (opt.labels) for (let c = 1; c <= 5; c++) s += `<text x="${X(c)}" y="146" font-size="11.5" text-anchor="middle" fill="#6b5b4a">${c}</text>`;
+  return s + "</svg>";
+}
+function groupText(rgs){
+  const groups = {};
+  rgs.forEach((g, i) => { (groups[g] = groups[g] || []).push(i + 1); });
+  const multi = Object.values(groups).filter(m => m.length > 1);
+  const solos = Object.values(groups).filter(m => m.length === 1).length;
+  if (rgs.every(g => g === rgs[0])) return "五つ全部が 同じ香り。";
+  if (!multi.length) return "全部 ちがう香り。";
+  let t = multi.map(m => "第" + m.join("香と第") + "香").join("、") + "が 同じ香り";
+  if (solos) t += "。ほかは すべて ちがいます";
+  return t + "。";
+}
+function lookup(rgs){ return TABLE.find(t => t.rgs.every((v, i) => v === rgs[i])); }
+
+/* ===== 画面遷移 ===== */
+function show(id){
+  document.querySelectorAll(".screen").forEach(e => e.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  window.scrollTo(0, 0);
+}
+/* ===== レベル選択 ===== */
+function refreshLevels(){
+  document.querySelectorAll("#levels button").forEach(b => b.classList.toggle("on", b.dataset.lv === level));
+  document.getElementById("lv-desc").textContent = LV_DESC[level];
+  document.getElementById("stats-line").textContent = stats.rounds ? `これまで ${stats.rounds} 局 ／ 全組正解 ${stats.perfect} 回` : "";
+}
+document.querySelectorAll("#levels button").forEach(b => b.addEventListener("click", () => {
+  level = b.dataset.lv; localStorage.setItem("genjiko-level", level); sndTap(); refreshLevels();
+}));
+
+/* ===== ゲーム状態 ===== */
+let G = null;
+function newGame(){
+  const entry = TABLE[Math.floor(Math.random() * TABLE.length)];
+  const k = new Set(entry.rgs).size;
+  let pool;
+  if (level === "easy"){ pool = EASY_POOL.slice(); }
+  else { pool = SCENTS.map((_, i) => i); }
+  // むずかしい: 似た組を必ず1組含める
+  let chosen = [];
+  if (level === "hard" && k >= 2){
+    const pair = SIMILAR[Math.floor(Math.random() * SIMILAR.length)];
+    chosen = pair.slice();
+  }
+  while (chosen.length < k){
+    const cand = pool[Math.floor(Math.random() * pool.length)];
+    if (!chosen.includes(cand)) chosen.push(cand);
+  }
+  chosen = chosen.sort(() => Math.random() - 0.5);
+  const scentOfGroup = {}; let idx = 0;
+  const scentOfCup = entry.rgs.map(g => { if (scentOfGroup[g] === undefined) scentOfGroup[g] = chosen[idx++]; return scentOfGroup[g]; });
+  G = { entry, scentOfCup, heard: [false, false, false, false, false], relisten: 0,
+        answer: [0, 1, 2, 3, 4], selected: null };
+  renderSmell();
+  show("scr-smell");
+}
+function cupEl(c, opts){
+  const b = document.createElement("button");
+  b.className = "cup" + (opts.cls ? " " + opts.cls : "");
+  let badge = "";
+  if (opts.badge !== undefined && opts.badge !== null)
+    badge = `<span class="badge" style="background:${GROUP_HEX[opts.badge]}">組</span>`;
+  else badge = `<span class="badge"></span>`;
+  b.innerHTML = `<span class="cupbody"><span class="smk">〜</span></span><span class="cname">第${c}香</span>${badge}` +
+    (opts.listen ? `<span class="listen">聞く</span>` : "");
+  b.addEventListener("click", opts.onTap);
+  return b;
+}
+/* ===== 聞香フェーズ ===== */
+function renderSmell(){
+  const wrap = document.getElementById("smell-cups"); wrap.innerHTML = "";
+  for (let c = 1; c <= 5; c++){
+    wrap.appendChild(cupEl(c, { cls: G.heard[c - 1] ? "heard" : "", onTap: () => openScent(c, false) }));
+  }
+  const n = G.heard.filter(Boolean).length;
+  document.getElementById("smell-msg").textContent = n === 5 ? "五つとも聞きました。答えに進めます。" : `聞いた香り： ${n} / 5`;
+  document.getElementById("btn-to-answer").disabled = n < 5;
+}
+let ovCtx = null;
+function openScent(c, isRelisten){
+  const s = SCENTS[G.scentOfCup[c - 1]];
+  ovCtx = { c, isRelisten };
+  document.getElementById("ov-title").textContent = `第${c}香`;
+  const gem = document.getElementById("ov-gem");
+  gem.style.background = `radial-gradient(circle at 35% 30%, ${s.color}, ${s.dark} 75%)`;
+  gem.innerHTML = motifSVG(s.motif);
+  document.getElementById("ov-name").textContent = s.name;
+  document.getElementById("ov-note").textContent = "色・文様・音の印象を 覚えてください";
+  document.getElementById("ov-scent").classList.add("open");
+  playScent(s);
+}
+document.getElementById("ov-replay").addEventListener("click", () => { if (ovCtx) playScent(SCENTS[G.scentOfCup[ovCtx.c - 1]]); });
+document.getElementById("ov-close").addEventListener("click", () => {
+  document.getElementById("ov-scent").classList.remove("open");
+  if (!ovCtx) return;
+  if (ovCtx.isRelisten){ G.relisten++; renderAnswer(); }
+  else { G.heard[ovCtx.c - 1] = true; renderSmell(); }
+  ovCtx = null;
+});
+document.getElementById("btn-to-answer").addEventListener("click", () => { sndTap(); renderAnswer(); show("scr-answer"); });
+document.getElementById("btn-smell-back").addEventListener("click", () => show("scr-title"));
+
+/* ===== 回答フェーズ ===== */
+function relistenLeft(){
+  if (level === "easy") return Infinity;
+  if (level === "normal") return 3 - G.relisten;
+  return 0;
+}
+function renderAnswer(){
+  document.getElementById("answer-fig").innerHTML = figureSVG(canon(G.answer), { labels: true });
+  const wrap = document.getElementById("answer-cups"); wrap.innerHTML = "";
+  const left = relistenLeft();
+  for (let c = 1; c <= 5; c++){
+    const g = G.answer[c - 1];
+    const multi = G.answer.filter(v => v === g).length > 1;
+    wrap.appendChild(cupEl(c, {
+      cls: G.selected === c ? "selected" : "",
+      badge: multi ? groupRank(G.answer, g) : null,
+      listen: left > 0,
+      onTap: () => tapCup(c)
+    }));
+    if (left > 0){
+      const last = wrap.lastChild;
+      last.querySelector(".listen").addEventListener("click", ev => { ev.stopPropagation(); openScent(c, true); });
+    }
+  }
+  document.getElementById("relisten-info").textContent =
+    level === "easy" ? "聞き直し： 何度でもできます（香杯の下の「聞く」）" :
+    level === "normal" ? `聞き直し： あと ${left} 回` : "聞き直しは できません";
+}
+function groupRank(answer, g){
+  const seen = [];
+  for (const v of answer){ if (!seen.includes(v)) seen.push(v); }
+  return seen.indexOf(g);
+}
+function canon(a){
+  const mp = {}, out = [];
+  a.forEach(g => { if (mp[g] === undefined) mp[g] = Object.keys(mp).length; out.push(mp[g]); });
+  return out;
+}
+function tapCup(c){
+  const msg = document.getElementById("answer-msg");
+  if (G.selected === null){ G.selected = c; sndTap(); msg.textContent = `第${c}香を選びました。同じ香りだと思う香杯をタップしてください。`; }
+  else if (G.selected === c){
+    const g = G.answer[c - 1];
+    if (G.answer.filter(v => v === g).length > 1){
+      G.answer[c - 1] = Math.max(...G.answer) + 1;
+      msg.textContent = `第${c}香を組から外しました。`;
+    } else msg.textContent = `第${c}香は もともと一つの組です。`;
+    G.selected = null; sndTap();
+  } else {
+    const from = G.selected;
+    G.answer[c - 1] = G.answer[from - 1];
+    G.selected = null; sndJoin();
+    msg.textContent = `第${c}香を 第${from}香の組に入れました。`;
+  }
+  renderAnswer();
+}
+document.getElementById("btn-reset-groups").addEventListener("click", () => {
+  G.answer = [0, 1, 2, 3, 4]; G.selected = null; sndTap();
+  document.getElementById("answer-msg").textContent = "組をリセットしました。";
+  renderAnswer();
+});
+document.getElementById("btn-judge").addEventListener("click", judge);
+
+/* ===== 答え合わせ ===== */
+function judge(){
+  const mine = canon(G.answer), truth = G.entry.rgs;
+  const same = (a, i, j) => (a[i] === a[j]);
+  let ok = 0, tot = 0;
+  for (let i = 0; i < 5; i++) for (let j = i + 1; j < 5; j++){ tot++; if (same(mine, i, j) === same(truth, i, j)) ok++; }
+  const perfect = ok === tot;
+  stats.rounds++; if (perfect) stats.perfect++;
+  document.getElementById("res-name").textContent = G.entry.name;
+  document.getElementById("res-reading").textContent = `（${G.entry.reading}） 『源氏物語』の帖名です`;
+  document.getElementById("res-score").textContent = perfect ? "全組 正解です！" : `組の当たり： ${ok} / ${tot}`;
+  document.getElementById("res-detail").textContent = groupText(truth);
+  document.getElementById("res-fig-true").innerHTML = figureSVG(truth, { labels: true });
+  document.getElementById("res-fig-mine").innerHTML = figureSVG(mine, { labels: true });
+  const myEntry = lookup(mine);
+  document.getElementById("res-mine-name").innerHTML = perfect
+    ? "あなたの型も 同じ「" + G.entry.name + "」です。"
+    : `あなたの型は「<b>${myEntry.name}</b>（${myEntry.reading}）」でした。`;
+  const chips = document.getElementById("res-chips"); chips.innerHTML = "";
+  for (let c = 1; c <= 5; c++){
+    const s = SCENTS[G.scentOfCup[c - 1]];
+    const el = document.createElement("span"); el.className = "chip";
+    el.innerHTML = `<span class="dot" style="background:${s.color}"></span>第${c}香：${s.name}`;
+    chips.appendChild(el);
+  }
+  show("scr-result");
+  if (perfect){ sndFanfare(); confetti(); } else if (ok >= 7) sndGood(); else sndTap();
+  refreshLevels();
+}
+function confetti(){
+  const box = document.createElement("div"); box.className = "confetti";
+  const cols = ["#7e57c2", "#b8860b", "#b03a2e", "#2e7d4f", "#e2608c"];
+  for (let i = 0; i < 42; i++){
+    const el = document.createElement("i");
+    el.style.left = Math.random() * 100 + "%";
+    el.style.background = cols[i % cols.length];
+    el.style.animationDuration = (1.4 + Math.random() * 1.6) + "s";
+    el.style.animationDelay = (Math.random() * 0.5) + "s";
+    box.appendChild(el);
+  }
+  document.body.appendChild(box);
+  setTimeout(() => box.remove(), 3800);
+}
+document.getElementById("btn-again").addEventListener("click", () => { sndTap(); newGame(); });
+document.getElementById("btn-result-title").addEventListener("click", () => show("scr-title"));
+
+/* ===== 図鑑 ===== */
+function renderGallery(){
+  const grid = document.getElementById("grid52"); grid.innerHTML = "";
+  TABLE.forEach(t => {
+    const d = document.createElement("div"); d.className = "gcell";
+    d.innerHTML = figureSVG(t.rgs) + `<div class="gn">${t.name}</div>`;
+    d.addEventListener("click", () => {
+      document.getElementById("ov-fig-big").innerHTML = figureSVG(t.rgs, { labels: true });
+      document.getElementById("ov-fig-name").textContent = t.name;
+      document.getElementById("ov-fig-reading").textContent = `（${t.reading}）`;
+      document.getElementById("ov-fig-desc").textContent = groupText(t.rgs);
+      document.getElementById("ov-fig").classList.add("open");
+      sndTap();
+    });
+    grid.appendChild(d);
+  });
+}
+document.getElementById("ov-fig-close").addEventListener("click", () => document.getElementById("ov-fig").classList.remove("open"));
+document.getElementById("btn-gallery").addEventListener("click", () => { renderGallery(); show("scr-gallery"); });
+document.getElementById("btn-gallery-back").addEventListener("click", () => show("scr-title"));
+document.getElementById("btn-why").addEventListener("click", () => show("scr-why"));
+document.getElementById("btn-why-back").addEventListener("click", () => show("scr-title"));
+document.getElementById("btn-how").addEventListener("click", () => document.getElementById("ov-how").classList.add("open"));
+document.getElementById("ov-how-close").addEventListener("click", () => document.getElementById("ov-how").classList.remove("open"));
+document.getElementById("btn-play").addEventListener("click", () => { sndTap(); newGame(); });
+
+/* ===== 初期表示 ===== */
+document.getElementById("title-fig").innerHTML = figureSVG([0, 1, 2, 3, 1], { labels: true });
+refreshLevels();
+</script>
+</body>
+</html>
